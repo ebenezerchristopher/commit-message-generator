@@ -8,6 +8,10 @@ Paste a git diff. Get a clean Conventional Commit message back from AI.
 - One-click copy, header-length warning, loading + error states
 - Responsive, dark-mode aware, deploys to Vercel with zero env vars
 
+### How it works
+
+The browser POSTs `{ settings, diff }` to `/api/commit`, a serverless function on Vercel. That function calls `${baseUrl}/chat/completions` on the user's behalf (no CORS, works with any provider), then returns the model's reply. The API key travels browser → Vercel function → provider, is held in memory only for the duration of the single request, and is never stored or logged.
+
 ## Run locally
 
 ```bash
