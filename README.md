@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Commit Message Generator
 
-## Getting Started
+Paste a git diff. Get a clean Conventional Commit message back from AI.
 
-First, run the development server:
+- Textarea for a git diff
+- Calls any **OpenAI-compatible** chat-completions endpoint (OpenAI, OpenRouter, Groq, Together, Ollama, etc.)
+- Returns a Conventional Commit message (`type(scope?): subject` + optional body)
+- One-click copy, header-length warning, loading + error states
+- Responsive, dark-mode aware, deploys to Vercel with zero env vars
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>. Open the **Settings** panel, paste your API key, base URL, and model name. They are stored only in your browser's `localStorage` and are never sent to a server.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Defaults: base URL `https://api.openai.com/v1`, model `gpt-4o-mini`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy to Vercel
 
-## Learn More
+The app is purely client-side. **No environment variables are required.**
 
-To learn more about Next.js, take a look at the following resources:
+### Option A — via the Vercel dashboard (easiest)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Push the repo to GitHub.
+2. Go to <https://vercel.com/new>, click **Import Git Repository**, select this repo.
+3. Leave all settings at defaults. Click **Deploy**.
+4. Vercel builds with `npm run build` and gives you a `https://<project>.vercel.app` URL.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Option B — via the Vercel CLI
 
-## Deploy on Vercel
+```bash
+npm i -g vercel   # if you don't have it
+vercel login
+vercel            # first run: accept the defaults, it will deploy a preview URL
+vercel --prod     # promote to production
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project layout
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+  layout.tsx          - root layout, metadata, fonts
+  page.tsx            - main page (server component)
+  globals.css         - tailwind v4 + base styles
+components/
+  CommitGenerator.tsx - client component: state, request lifecycle
+  SettingsPanel.tsx   - API key + base URL + model, persisted to localStorage
+  CommitOutput.tsx    - parsed commit render + copy-to-clipboard
+lib/
+  types.ts            - shared types
+  prompts.ts          - system prompt + parse/format helpers
+  openai.ts           - OpenAI-compatible fetch helper
+```
+
+## How it works
+
+The browser `POST`s directly to `<baseUrl>/chat/completions` with the user's `Authorization: Bearer <key>`. The response is parsed into a conventional commit header (type / scope / subject) and optional body, then displayed with a one-click copy. The model is asked for plain text only — any code-fenced reply is stripped before display.
